@@ -22,9 +22,11 @@ func main() {
 	defer conn.Close()
 
 	buf := make([]byte, 1024)
-	if _, err = conn.Read(buf); err != nil {
-		fmt.Println("Error reading from client: %w", err)
-		os.Exit(1)
+	for {
+		if _, err = conn.Read(buf); err != nil {
+			fmt.Println("Error reading from client: ", err)
+			os.Exit(1)
+		}
+		conn.Write([]byte("+PONG\r\n"))	
 	}
-	conn.Write([]byte("+PONG\r\n"))
 }

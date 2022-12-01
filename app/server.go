@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"net"
 	"os"
 )
@@ -14,19 +15,34 @@ func main() {
 		fmt.Println("Failed to bind to port 6379")
 		os.Exit(1)
 	}
-	conn, err := l.Accept()
-	if err != nil {
-		fmt.Println("Error accepting connection: ", err.Error())
-		os.Exit(1)
-	}
-	defer conn.Close()
-
-	buf := make([]byte, 1024)
 	for {
-		if _, err = conn.Read(buf); err != nil {
-			fmt.Println("Error reading from client: ", err)
+		conn, err := l.Accept()
+		if err != nil {
+			fmt.Println("Error accepting connection: ", err.Error())
 			os.Exit(1)
 		}
-		conn.Write([]byte("+PONG\r\n"))	
+
+		go handleConnection(conn)
+	}
+}
+
+func handleConnection(conn net.Conn) {
+	defer conn.Close()
+
+	for {
+		buf := make([]byte, 1024)
+
+		if _, err := conn.Read(buf); err != nil {
+			if err == io.EOF {
+				break
+			} else {
+				fmt.Println("error reading from client: ", err.Error())
+				os.Exit(1)
+			}
+		}
+
+		// Let's ignore the client's input for now and hardcode a response.
+		// We'll implement a proper Redis Protocol parser in later stages.
+		conn.Write([]byte("+PONG\r\n"))
 	}
 }

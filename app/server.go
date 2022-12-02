@@ -38,7 +38,7 @@ func handleConnection(conn net.Conn) {
 
 		command := value.Array()[0].String()
 		args := value.Array()[1:]
-
+		fmt.Println(command, args)
 		switch command {
 		case "ping":
 			conn.Write([]byte("+PONG\r\n"))

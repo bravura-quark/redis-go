@@ -33,6 +33,7 @@ func handleConnection(conn net.Conn) {
 		value, err := DecodeRESP(bufio.NewReader(conn))
 		if err != nil {
 			fmt.Println("Error decoding RESP: ", err.Error())
+			return // Ignore clients that we fail to read from.
 		}
 
 		command := value.Array()[0].String()

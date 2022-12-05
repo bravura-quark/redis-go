@@ -15,6 +15,7 @@ func main() {
 		fmt.Println("Failed to bind to port 6379")
 		os.Exit(1)
 	}
+	storage := NewStorage()
 	for {
 		conn, err := l.Accept()
 		if err != nil {
@@ -22,11 +23,11 @@ func main() {
 			os.Exit(1)
 		}
 
-		go handleConnection(conn)
+		go handleConnection(conn, storage)
 	}
 }
 
-func handleConnection(conn net.Conn) {
+func handleConnection(conn net.Conn, storage *KeyValue) {
 	defer conn.Close()
 
 	for {
@@ -38,12 +39,16 @@ func handleConnection(conn net.Conn) {
 
 		command := value.Array()[0].String()
 		args := value.Array()[1:]
-		fmt.Println(command, args)
 		switch command {
 		case "ping":
 			conn.Write([]byte("+PONG\r\n"))
 		case "echo":
 			conn.Write([]byte(fmt.Sprintf("$%d\r\n%s\r\n", len(args[0].String()), args[0].String())))
+		case "set":
+			storage.Set(args[0].String(), args[1].String())
+			conn.Write([]byte("+OK\r\n"))
+		case "get":
+			conn.Write([]byte(fmt.Sprintf("+%s\r\n", storage.Get(args[0].String()))))
 		default:
 			conn.Write([]byte("-ERR unknown command '" + command + "'\r\n"))
 		}
